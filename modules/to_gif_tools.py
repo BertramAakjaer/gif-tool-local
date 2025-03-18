@@ -59,16 +59,24 @@ def __from_video__(file_path, skip_every_n_frames, speed):
     imageio.mimsave(temp_gif_path, frames, fps=fps / (speed / skip_every_n_frames), loop=0)
     print(f"Saved GIF to {temp_gif_path}")
     
-    # Move the temporary file to the output directory
-    os.replace(temp_gif_path, r'output\output.gif')
-    print("Moved GIF to output directory")
+    base = os.path.basename(abs_video_path)
+    base = os.path.splitext(base)[0] + ".gif"
+
+    os.replace(temp_gif_path, os.path.join("temp", base))
     
     print("Successfully created output.gif")
+
 
 def __from_image__(file_path):
     try:
         img = Image.open(file_path)
-        img.save('output/output.gif', save_all=True, append_images=[img], loop=0)
+
+        base = os.path.basename(file_path)
+        base = os.path.splitext(base)[0] + ".gif"
+
+        destination_path = os.path.join("temp", base)
+
+        img.save(destination_path, save_all=True, append_images=[img], loop=0)
         print("Successfully created output.gif")
     except Exception as e:
         print(f"Error converting image: {str(e)}")
