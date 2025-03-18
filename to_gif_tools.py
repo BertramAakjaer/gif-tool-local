@@ -5,8 +5,8 @@ from PIL import Image
 def convert_to_gif(file_path):
     __delete_output__()
 
-    skip_every_n_frames = 500
-    speed = 40
+    skip_every_n_frames = 4
+    speed = 2
 
     try:
         # Check if the file is a video
@@ -42,7 +42,9 @@ def __from_video__(file_path, skip_every_n_frames, speed):
     
     # Read the video
     reader = imageio.get_reader(abs_video_path)
-    fps = reader.get_meta_data()['fps']
+    meta_data = reader.get_meta_data()
+    fps = meta_data['fps']
+    print("Video metadata:", meta_data)  # This will show all available metadata
     
     # Get frames from video
     frames = []
@@ -57,7 +59,7 @@ def __from_video__(file_path, skip_every_n_frames, speed):
         temp_gif_path = tmp_file.name
     
     # Save as GIF in the temporary file
-    imageio.mimsave(temp_gif_path, frames, fps=fps / (skip_every_n_frames / speed), loop=0)  # loop=0 means infinite loop
+    imageio.mimsave(temp_gif_path, frames, fps=fps / (skip_every_n_frames / speed), loop=0)
     print(f"Saved GIF to {temp_gif_path}")
     
     # Move the temporary file to the output directory
