@@ -1,4 +1,4 @@
-import to_gif_tools as gt
+import modules.to_gif_tools as gt
 from PIL import Image
 import streamlit as st
 import os, base64
@@ -16,19 +16,28 @@ if __name__ == "__main__":
     uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg', 'mp4', 'mov', 'webm'])
 
     if uploaded_file is not None:
-        if st.button("Convert to GIF"):
-            # Save the uploaded file temporarily
-            temp_path = f"temp//temp_{uploaded_file.name}"
-            with open(temp_path, "wb") as f:
-                f.write(uploaded_file.getvalue())
-            
-            # Convert to GIF
-            with st.spinner(text="Converting to .gif...", show_time=True):
-                gt.convert_to_gif(temp_path)
-                # Remove temp file
-                os.remove(temp_path)
+        col1, col2, col3 = st.columns(3)
+
+        with col2:
+            speed_input = st.number_input("Speed (float)", min_value=0.1, max_value=6.0, value=1.0, step=0.5)
+
+        with col3:
+            skip_frame_input = st.number_input("Keep every frame (int)", min_value=0, max_value=20, value=4, step=0)
+
+        with col1:
+            if st.button("Convert to GIF"):
+                # Save the uploaded file temporarily
+                temp_path = f"temp/{uploaded_file.name}"
+                with open(temp_path, "wb") as f:
+                    f.write(uploaded_file.getvalue())
                 
-                st.success(f"Converted {uploaded_file.name} to GIF!")
+                # Convert to GIF
+                with st.spinner("Converting to .gif..."):
+                    gt.convert_to_gif(temp_path, speed_input, skip_frame_input)
+                    # Remove temp file
+                    os.remove(temp_path)
+                    st.success(f"Converted {uploaded_file.name} to GIF!")
+
 
     # Display the output GIF if it exists
     try:
@@ -64,11 +73,13 @@ if __name__ == "__main__":
         else:
             st.warning("No active .gif to download.")
     
-    st.subheader("Tabs")
+    st.subheader("Tools")
     tab1, tab2, tab3 = st.tabs(["Tab 1", "Tab 2", "Tab 3"])
     with tab1:
         st.write("Content for tab 1")
+
     with tab2:
         st.write("Content for tab 2")
+
     with tab3:
         st.write("Content for tab 3")
