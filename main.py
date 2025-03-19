@@ -42,6 +42,8 @@ for file in a:
 def new_gif():
     files = os.listdir("temp")
 
+    path_to_gif = None
+
     for file in files:
         if file[-4:] == ".gif":
             path_to_gif = os.path.join("temp", file)
@@ -88,17 +90,18 @@ if __name__ == "__main__":
             if st.button("Convert to GIF"):
                 # Save the uploaded file temporarily
                 temp_path = f"temp/{uploaded_file.name}"
+
                 with open(temp_path, "wb") as f:
                     f.write(uploaded_file.getvalue())
                 
                 # Convert to GIF
                 with st.spinner("Converting to .gif..."):
                     gt.convert_to_gif(temp_path, speed_input, skip_frame_input)
-                    # Remove temp file
-                    os.remove(temp_path)
-                    st.success(f"Converted {uploaded_file.name} to GIF!")
-                    new_gif()
 
+                uploaded_file.close()
+                
+                st.success(f"Converted {uploaded_file.name} to GIF!")
+                new_gif()
 
     # Display the output GIF if it exists
     try:
