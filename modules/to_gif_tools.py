@@ -41,22 +41,20 @@ def __from_video__(file_path, skip_every_n_frames, speed):
     reader = imageio.get_reader(abs_video_path)
     meta_data = reader.get_meta_data()
     fps = meta_data['fps']
-    print("Video metadata:", meta_data)  # This will show all available metadata
+    # print("Video metadata:", meta_data)
     
     # Get frames from video
     frames = []
     for i, frame in enumerate(reader):
-        if i % skip_every_n_frames == 0:  # Only keep every fourth frame
+        if i % skip_every_n_frames == 0: 
             frames.append(frame)
-    
-    print(f"Read {len(frames)} frames from video")
-    
+        
     # Create a temporary file
     with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp_file:
         temp_gif_path = tmp_file.name
     
     # Save as GIF in the temporary file
-    imageio.mimsave(temp_gif_path, frames, fps=fps / (speed / skip_every_n_frames), loop=0)
+    imageio.mimsave(temp_gif_path, frames, fps=(fps / (speed / skip_every_n_frames)), loop=0)
     print(f"Saved GIF to {temp_gif_path}")
     
     base = os.path.basename(abs_video_path)

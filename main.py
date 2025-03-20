@@ -4,6 +4,7 @@ import os, base64, shutil
 
 import modules.to_gif_tools as gt
 import modules.gif_class as gc
+import modules.caption_gif as cg
 
 
 
@@ -153,14 +154,17 @@ if __name__ == "__main__":
 
     
     with col3:
-        if os.path.exists(r"output/output.gif"):
-            with open(r"output/output.gif", "rb") as f:
+        if os.path.exists(active_gif.path):
+            with open(active_gif.path, "rb") as f:
                 gif_data = f.read()
                 
+            base = os.path.basename(active_gif.path)
+            base = os.path.splitext(base)[0] + '.gif'
+            
             st.download_button(
                 label="Click to download",
                 data=gif_data,
-                file_name="output.gif",
+                file_name=base,
                 mime="image/gif"
             )
 
@@ -168,7 +172,7 @@ if __name__ == "__main__":
             st.warning("No active .gif to download.")
     
     st.subheader("Tools")
-    tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Tab 3"])
+    tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
     with tab1:
         st.write("Content for tab 1")
 
@@ -176,4 +180,13 @@ if __name__ == "__main__":
         st.write("Content for tab 2")
 
     with tab3:
-        st.write("Content for tab 3")
+        st.title("Tool: Add caption to .gif")
+        if os.path.exists(r"output/output.gif"):
+            caption = st.text_input("Caption:")
+            if st.button("Add caption"):
+                cg.add_caption_to_gif(active_gif.path, caption)
+                new_gif()
+                st.success("Added caption to .gif!")
+                st.rerun()
+        else:
+            st.warning("No active .gif found.")
