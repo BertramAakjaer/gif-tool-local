@@ -19,26 +19,43 @@ def move_gif_active(gif_path):
     print(f"Moved {filename} to output directory")
 
 
-
-
-if 'active_gif_cached' not in st.session_state:
-    st.session_state['active_gif_cached'] = None
+# Clear output folder at startup
+for file in os.listdir("output"):
+    if file != ".gitkeep":
+        os.remove(os.path.join("output", file))
 
 active_gif = None
 
-if st.session_state['active_gif_cached'] is not None:
-    active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
-    move_gif_active(active_gif.path)
+if 'active_gif_cached' not in st.session_state:
+    st.session_state['active_gif_cached'] = None
+    
+    if len(os.listdir("history")) > 1:
+        temp = os.listdir("history")
+        for file in temp:
+            if file.endswith(".gif"):
+                st.session_state['active_gif_cached'] = os.path.join("history", file)
+                active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
+                move_gif_active(active_gif.path)
+                break
 
-gif_history = []
+elif st.session_state['active_gif_cached'] is not None:
+        active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
+        move_gif_active(active_gif.path)
+        
+def update_history():
+    gif_history = []
 
 
-a = os.listdir("history")
-for file in a:
-    if file.endswith(".gitkeep"):
-        continue
+    a = os.listdir("history")
+    for file in a:
+        if file.endswith(".gitkeep"):
+            continue
 
-    gif_history.append(file)
+        gif_history.append(file)
+    
+    return gif_history
+        
+gif_history = update_history()
 
 def new_gif():
     files = os.listdir("temp")
@@ -72,6 +89,7 @@ if __name__ == "__main__":
     for file in os.listdir("temp"):
         if file != ".gitkeep":
             os.remove(os.path.join("temp", file))
+    
 
     st.title("GIF Converter")
 
@@ -103,6 +121,7 @@ if __name__ == "__main__":
                 
                 st.success(f"Converted {uploaded_file.name} to GIF!")
                 new_gif()
+                gif_history = update_history()
 
     # Display the output GIF if it exists
     try:
@@ -133,6 +152,7 @@ if __name__ == "__main__":
 
             move_gif_active(active_gif.path)
             st.rerun()
+            
         if st.button("Clear history"):
             for file in gif_history:
                 if file != ".gitkeep":
@@ -154,39 +174,44 @@ if __name__ == "__main__":
 
     
     with col3:
-        if os.path.exists(active_gif.path):
-            with open(active_gif.path, "rb") as f:
-                gif_data = f.read()
+        try:
+            if os.path.exists(active_gif.path):
+                with open(active_gif.path, "rb") as f:
+                    gif_data = f.read()
+                    
+                base = os.path.basename(active_gif.path)
+                base = os.path.splitext(base)[0] + '.gif'
                 
-            base = os.path.basename(active_gif.path)
-            base = os.path.splitext(base)[0] + '.gif'
-            
-            st.download_button(
-                label="Click to download",
-                data=gif_data,
-                file_name=base,
-                mime="image/gif"
-            )
+                st.download_button(
+                    label="Click to download",
+                    data=gif_data,
+                    file_name=base,
+                    mime="image/gif"
+                )
 
-        else:
+            else:
+                st.warning("No active .gif to download.")
+        except Exception as e:
             st.warning("No active .gif to download.")
-    
-    st.subheader("Tools")
-    tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
-    with tab1:
-        st.write("Content for tab 1")
+        
+        
+    if active_gif is not None:
+        st.subheader("Tools")
+        tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
+        with tab1:
+            st.write("Content for tab 1")
 
-    with tab2:
-        st.write("Content for tab 2")
+        with tab2:
+            st.write("Content for tab 2")
 
-    with tab3:
-        st.title("Tool: Add caption to .gif")
-        if os.path.exists(r"output/output.gif"):
-            caption = st.text_input("Caption:")
-            if st.button("Add caption"):
-                cg.add_caption_to_gif(active_gif.path, caption)
-                new_gif()
-                st.success("Added caption to .gif!")
-                st.rerun()
-        else:
-            st.warning("No active .gif found.")
+        with tab3:
+            st.title("Tool: Add caption to .gif")
+            if os.path.exists(r"output/output.gif"):
+                caption = st.text_input("Caption:")
+                if st.button("Add caption"):
+                    cg.add_caption_to_gif(active_gif.path, caption)
+                    new_gif()
+                    st.success("Added caption to .gif!")
+                    st.rerun()
+            else:
+                st.warning("No active .gif found.")

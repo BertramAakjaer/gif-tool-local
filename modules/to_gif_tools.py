@@ -1,4 +1,4 @@
-import imageio, os, tempfile
+import imageio, os, tempfile, shutil
 from PIL import Image
 
 
@@ -12,6 +12,8 @@ def convert_to_gif(file_path, speed, skip_every_n_frames):
 
         elif file_path.lower().endswith(('.jpeg', '.jpg', '.png', '.webp')):
             __from_image__(file_path)
+        elif file_path.lower().endswith('.gif'):
+            __save_gif__(file_path)
         else:
             raise ValueError("Invalid file format.")
         
@@ -80,3 +82,14 @@ def __from_image__(file_path):
         print(f"Error converting image: {str(e)}")
 
 
+def __save_gif__(file_path):
+    try:
+        base = os.path.basename(file_path)
+        base = os.path.splitext(base)[0] + ".gif"
+
+        destination_path = os.path.join("temp", base)
+
+        shutil.copy2(file_path, destination_path)
+        print(f"Moved {base} to temp directory")
+    except Exception as e:
+        print(f"Error saving gif: {str(e)}")
