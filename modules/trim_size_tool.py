@@ -45,5 +45,6 @@ def trim_gif_ui(path):
 
         os.replace(temp_gif_path, path_to_gif)
         st.success("Added caption to .gif!")
+        st.rerun()
         
         return True

@@ -94,7 +94,7 @@ if __name__ == "__main__":
     st.title("GIF Converter")
 
     # File uploader
-    uploaded_file = st.file_uploader("Choose a file", type=['png', 'jpg', 'jpeg', 'mp4', 'mov', 'webm'])
+    uploaded_file = st.file_uploader("Choose a file", type=['gif', 'png', 'jpg', 'jpeg', 'mp4', 'mov', 'webm'])
 
     if uploaded_file is not None:
         col1, col2, col3 = st.columns(3)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             skip_frame_input = st.number_input("Keep every frame (int)", min_value=0, max_value=20, value=4, step=0)
 
         with col1:
-            if st.button("Convert to GIF"):
+            if st.button("Convert/upload GIF"):
                 # Save the uploaded file temporarily
                 temp_path = f"temp/{uploaded_file.name}"
 
@@ -141,70 +141,70 @@ if __name__ == "__main__":
     except Exception as e:
         st.error(f"Error loading GIF: {e}")
     
-    st.subheader("")
-    
-    col1, col2, col3 = st.columns(3)
+    if active_gif is not None:
+        st.subheader("")
+        
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        b = st.selectbox("Set gif active, from history", gif_history)
-        if st.button("Set active"):
-            st.session_state['active_gif_cached'] = os.path.join("history", b)
-            active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
+        with col1:
+            b = st.selectbox("Set gif active, from history", gif_history)
+            if st.button("Set active"):
+                st.session_state['active_gif_cached'] = os.path.join("history", b)
+                active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
 
-            move_gif_active(active_gif.path)
-            st.rerun()
-            
-        if st.button("Clear history"):
-            for file in gif_history:
-                if file != ".gitkeep":
-                    os.remove(os.path.join("history", file))
+                move_gif_active(active_gif.path)
+                st.rerun()
                 
-            st.session_state['active_gif_cached'] = None
-            active_gif = None
-            st.rerun()
-
-
-    with col2:
-        if st.button("Remove active .gif"):
-            if os.path.exists(r"output/output.gif"):
-                os.remove(r"output/output.gif")
+            if st.button("Clear history"):
+                for file in gif_history:
+                    if file != ".gitkeep":
+                        os.remove(os.path.join("history", file))
+                    
                 st.session_state['active_gif_cached'] = None
                 active_gif = None
-
                 st.rerun()
 
-    
-    with col3:
-        try:
-            if os.path.exists(active_gif.path):
-                with open(active_gif.path, "rb") as f:
-                    gif_data = f.read()
-                    
-                base = os.path.basename(active_gif.path)
-                base = os.path.splitext(base)[0] + '.gif'
-                
-                st.download_button(
-                    label="Click to download",
-                    data=gif_data,
-                    file_name=base,
-                    mime="image/gif"
-                )
 
-            else:
+        with col2:
+            if st.button("Remove active .gif"):
+                if os.path.exists(r"output/output.gif"):
+                    os.remove(r"output/output.gif")
+                    st.session_state['active_gif_cached'] = None
+                    active_gif = None
+
+                    st.rerun()
+
+        
+        with col3:
+            try:
+                if os.path.exists(active_gif.path):
+                    with open(active_gif.path, "rb") as f:
+                        gif_data = f.read()
+                        
+                    base = os.path.basename(active_gif.path)
+                    base = os.path.splitext(base)[0] + '.gif'
+                    
+                    st.download_button(
+                        label="Click to download",
+                        data=gif_data,
+                        file_name=base,
+                        mime="image/gif"
+                    )
+
+                else:
+                    st.warning("No active .gif to download.")
+            except Exception as e:
                 st.warning("No active .gif to download.")
-        except Exception as e:
-            st.warning("No active .gif to download.")
         
         
     if active_gif is not None:
         st.subheader("Tools")
         tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
-        
+            
         with tab1:
             if os.path.exists(r"output/output.gif"):
                 if tst.trim_gif_ui(active_gif.path):
                     new_gif()
-                    st.rerun()
             else:
                 st.warning("No active .gif found.")
 

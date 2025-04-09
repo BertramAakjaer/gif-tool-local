@@ -56,7 +56,7 @@ def __from_video__(file_path, skip_every_n_frames, speed):
         temp_gif_path = tmp_file.name
     
     # Save as GIF in the temporary file
-    imageio.mimsave(temp_gif_path, frames, fps=(fps / (speed / skip_every_n_frames)), loop=0)
+    imageio.mimsave(temp_gif_path, frames, fps=(fps / skip_every_n_frames * speed), loop=0)
     print(f"Saved GIF to {temp_gif_path}")
     
     base = os.path.basename(abs_video_path)
