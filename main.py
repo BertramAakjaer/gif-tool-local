@@ -1,10 +1,10 @@
-from PIL import Image
 import streamlit as st
 import os, base64, shutil
 
 import modules.to_gif_tools as gt
 import modules.gif_class as gc
 import modules.caption_gif as cg
+import modules.trim_size_tool as tst
 
 
 
@@ -122,6 +122,7 @@ if __name__ == "__main__":
                 st.success(f"Converted {uploaded_file.name} to GIF!")
                 new_gif()
                 gif_history = update_history()
+                st.rerun()
 
     # Display the output GIF if it exists
     try:
@@ -198,8 +199,14 @@ if __name__ == "__main__":
     if active_gif is not None:
         st.subheader("Tools")
         tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
+        
         with tab1:
-            st.write("Content for tab 1")
+            if os.path.exists(r"output/output.gif"):
+                if tst.trim_gif_ui(active_gif.path):
+                    new_gif()
+                    st.rerun()
+            else:
+                st.warning("No active .gif found.")
 
         with tab2:
             st.write("Content for tab 2")

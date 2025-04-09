@@ -10,8 +10,20 @@ FONT_SIZE = 40
 
 FILE_ADD_NAME = '_captioned'
 
-def add_caption_to_gif(gif_path, caption, n_duration=0.1):
+def add_caption_to_gif(gif_path, caption):
     gif = imageio.mimread(gif_path)
+    
+    gif_reader = imageio.get_reader(gif_path)
+
+    
+    # Get frame durations - some GIFs have different durations per frame
+    durations = []
+    for frame_idx in range(len(gif_reader)):
+        durations.append(gif_reader.get_meta_data(frame_idx).get('duration', 1000) / 1000)
+    
+    # Read all frames
+    gif = list(gif_reader)
+    
 
     # Determine the size of the GIF
     gif_width, gif_height = gif[0].shape[1], gif[0].shape[0]
@@ -21,9 +33,12 @@ def add_caption_to_gif(gif_path, caption, n_duration=0.1):
     gif_width = int(gif_width * scale)
     gif_height = int(gif_height * scale)
     gif = [np.array(Image.fromarray(frame).resize((gif_width, gif_height))) for frame in gif]
+    
+    with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp_file:
+        temp_gif_path = tmp_file.name
 
     # saving rezied gif
-    imageio.mimsave(r"temp\resized_for_caption.gif", gif) 
+    imageio.mimsave(temp_gif_path, gif) 
     
     # caption_scale = math.ceil(len(caption) / MAX_CHARACTERS)
 
@@ -76,7 +91,8 @@ def add_caption_to_gif(gif_path, caption, n_duration=0.1):
     # Convert the caption image to a numpy array
     caption_array = np.array(caption_image)
 
-    gif = imageio.mimread(r"temp\resized_for_caption.gif")
+    gif = imageio.mimread(temp_gif_path)
+    os.unlink(temp_gif_path)
 
     # Create a list to hold the modified frames
     modified_frames = []
@@ -97,7 +113,7 @@ def add_caption_to_gif(gif_path, caption, n_duration=0.1):
     with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp_file:
         temp_gif_path = tmp_file.name
     
-    imageio.mimsave(temp_gif_path, modified_frames, duration=n_duration, loop=0, format='GIF')
+    imageio.mimsave(temp_gif_path, modified_frames, duration=durations, loop=0, format='GIF')
     
     base = os.path.basename(gif_path)
     base = os.path.splitext(base)[0] + FILE_ADD_NAME + '.gif'
