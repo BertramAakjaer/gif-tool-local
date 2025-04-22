@@ -5,10 +5,9 @@ import modules.to_gif_tools as gt
 import modules.gif_class as gc
 import modules.caption_gif as cg
 import modules.trim_size_tool as tst
+#import modules.lossy_gif as lg
 
-
-
-
+# Sætter en hovedet gif, til at arbejde på
 def move_gif_active(gif_path):
     gt.__delete_output__()
 
@@ -19,13 +18,14 @@ def move_gif_active(gif_path):
     print(f"Moved {filename} to output directory")
 
 
-# Clear output folder at startup
+# Sletter output filen, så der er klar til ny gif, ved startup
 for file in os.listdir("output"):
     if file != ".gitkeep":
         os.remove(os.path.join("output", file))
 
 active_gif = None
 
+# Hvis der tidligere er blevet valgt en gif, så sætter den den som aktiv
 if 'active_gif_cached' not in st.session_state:
     st.session_state['active_gif_cached'] = None
     
@@ -38,10 +38,12 @@ if 'active_gif_cached' not in st.session_state:
                 move_gif_active(active_gif.path)
                 break
 
+# Opretter cache til den aktive gif, så den kan bruges i gemmem sessions
 elif st.session_state['active_gif_cached'] is not None:
         active_gif = gc.GifHolder(st.session_state['active_gif_cached'])
         move_gif_active(active_gif.path)
-        
+
+# Funktion til at opdatere historikken af gifs, hente alle de tidligere gifs fra mappen
 def update_history():
     gif_history = []
 
@@ -54,8 +56,13 @@ def update_history():
         gif_history.append(file)
     
     return gif_history
-        
+
+# Defineres her, så den kan bruges i main
 gif_history = update_history()
+
+# Når en ny gif laves, så flyttes den til temp mappen
+# Denne funktion finder den nyeste gif i temp mappen og flytter den til history mappen
+# og opdaterer den aktive gif
 
 def new_gif():
     files = os.listdir("temp")
@@ -85,7 +92,8 @@ def new_gif():
 
 
 if __name__ == "__main__":
-    # Clear temp folder at startup
+    
+    # Rydder temp folder ved startup
     for file in os.listdir("temp"):
         if file != ".gitkeep":
             os.remove(os.path.join("temp", file))
@@ -93,21 +101,21 @@ if __name__ == "__main__":
 
     st.title("GIF Converter")
 
-    # File uploader
+    # Fil uploader
     uploaded_file = st.file_uploader("Choose a file", type=['gif', 'png', 'jpg', 'jpeg', 'mp4', 'mov', 'webm'])
 
+    # Hvis en fil er valgt, så vises der en knap til at konvertere den til gif
     if uploaded_file is not None:
         col1, col2, col3 = st.columns(3)
 
-        with col2:
-            speed_input = st.number_input("Speed (float)", min_value=0.1, max_value=6.0, value=1.0, step=0.5)
+        with col2: # Vælg hastighed af gif
+            speed_input = st.number_input("Speed (float)", min_value=0.1, max_value=20.0, value=1.0, step=0.5)
 
-        with col3:
-            skip_frame_input = st.number_input("Keep every frame (int)", min_value=0, max_value=20, value=4, step=0)
+        with col3: # Vælg frames (til optimering af video til gif)
+            skip_frame_input = st.number_input("Keep every frame (int)", min_value=0, max_value=60, value=4, step=0)
 
         with col1:
             if st.button("Convert/upload GIF"):
-                # Save the uploaded file temporarily
                 temp_path = f"temp/{uploaded_file.name}"
 
                 with open(temp_path, "wb") as f:
@@ -124,25 +132,43 @@ if __name__ == "__main__":
                 gif_history = update_history()
                 st.rerun()
 
-    # Display the output GIF if it exists
+    # Viser den aktive gif, hvis der er en, ved brug af markdown integration
     try:
         if os.path.exists(r"output/output.gif"):
             gif_image = open(r"output/output.gif", "rb")
             contents = gif_image.read()
             data_url = base64.b64encode(contents).decode("utf-8")
             gif_image.close()
+            
+            
             st.markdown(
                 f'<img src="data:image/gif;base64,{data_url}" alt="cat gif" style="max-height: 400px; display: block; margin-left: auto; margin-right: auto;">',
                 unsafe_allow_html=True,
             )
+            
+            # Viser metadata om den aktive gif
+            st.text(f"Name: {active_gif.name}")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.text(f"Widt: {active_gif.width} px")
+                st.text(f"Height: {active_gif.height} px")
+                
+            with col2:
+                st.text(f"Duration: {int(active_gif.clip_duration // 60)}m {int(active_gif.clip_duration % 60)}s ({active_gif.fps:.2f} fps)")
+                st.text(f"Frames: {active_gif.frames}")
+                
+            with col3:
+                st.text(f"Size: {active_gif.space:.2f} MB")
+            
         else:
             st.info("No active .gif found.")
 
     except Exception as e:
         st.error(f"Error loading GIF: {e}")
     
+    # Knapper til at slette den aktive gif og til at vælge en fra historikken
     if active_gif is not None:
-        st.subheader("")
+        st.divider()
         
         col1, col2, col3 = st.columns(3)
 
@@ -196,22 +222,22 @@ if __name__ == "__main__":
             except Exception as e:
                 st.warning("No active .gif to download.")
         
-        
+    # Forskellige værktøjer til at arbejde med .gif'en
     if active_gif is not None:
         st.subheader("Tools")
-        tab1, tab2, tab3 = st.tabs(["Crop", "Tab 2", "Caption .gif"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Crop", "Trim", "Caption .gif", "Optimize .gif"])
             
-        with tab1:
+        with tab1: # Værktøj til at Croppe gif'en
             if os.path.exists(r"output/output.gif"):
                 if tst.trim_gif_ui(active_gif.path):
                     new_gif()
             else:
                 st.warning("No active .gif found.")
 
-        with tab2:
+        with tab2: # Værktøj til at trimme gif'en
             st.write("Content for tab 2")
 
-        with tab3:
+        with tab3: # Værktøj til at tilføje caption til gif'en
             st.title("Tool: Add caption to .gif")
             if os.path.exists(r"output/output.gif"):
                 caption = st.text_input("Caption:")
@@ -222,3 +248,6 @@ if __name__ == "__main__":
                     st.rerun()
             else:
                 st.warning("No active .gif found.")
+        
+        with tab4: # Værktøj til at optimere gif'en (ikke implementeret endnu)
+            st.title("Tool: Optimize .gif")

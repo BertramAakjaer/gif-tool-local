@@ -1,0 +1,58 @@
+from PIL import Image
+import os, tempfile
+
+FILE_ADD_NAME = '_optimized'
+
+def optimize_gif(gif_path, lossy_value=30, size_percent=100):
+    """Optimize GIF using lossy compression and resize"""
+    try:
+        # Open and optimize the GIF
+        img = Image.open(gif_path)
+        frames = []
+        durations = []
+        
+        # Calculate new dimensions
+        width, height = img.size
+        new_width = int(width * (size_percent / 100))
+        new_height = int(height * (size_percent / 100))
+        
+        # Convert lossy_value (0-100) to colors (2-256)
+        n_colors = int((lossy_value / 100.0) * 256)
+        n_colors = max(2, min(256, n_colors))
+        
+        for frame in range(img.n_frames):
+            img.seek(frame)
+            # Resize and convert to P mode with limited palette
+            frame_img = img.copy()
+            if size_percent != 100:
+                frame_img = frame_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            if frame_img.mode != 'P':
+                frame_img = frame_img.convert('P', palette=Image.ADAPTIVE, colors=n_colors)
+            frames.append(frame_img)
+            durations.append(img.info.get('duration', 100))
+        
+        base = os.path.basename(gif_path)
+        base = os.path.splitext(base)[0] + FILE_ADD_NAME + '.gif'
+        
+        path_to_gif = os.path.join("temp", base)
+        
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp_file:
+            temp_gif_path = tmp_file.name
+            
+        frames[0].save(
+            temp_gif_path,
+            save_all=True,
+            append_images=frames[1:],
+            optimize=True,
+            loop=0,
+            duration=durations  # Apply the original durations
+        )
+        
+        os.replace(temp_gif_path, path_to_gif)
+        
+        return True
+    
+    except Exception as e:
+        print(f"Error optimizing GIF: {e}")
+        return False

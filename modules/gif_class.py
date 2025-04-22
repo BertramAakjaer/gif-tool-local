@@ -1,51 +1,52 @@
 from PIL import Image
-import os
+import os, imageio
 
 class GifHolder:
     def __init__(self, gif_path):
-
-
         self.path = gif_path
 
         self.name = ""
-        #self.clip_duration = 0
-        #self.frames = 0
+        
+        self.clip_duration = 0
+        self.frames = 0
+        self.fps = 0
+        self.space = 0
+        
         self.width = 0
         self.height = 0
         
-        #self.fps = 0
-        
-        self.space = 0
-
         self.populate_gif_info()
 
-    def populate_gif_info(self):
+    def populate_gif_info(self): # Intern funktion til at hente metadata fra gif'en og gemme som variabler
         try:
-            temp_gif = Image.open(self.path)
-            self.name = os.path.basename(self.path)
-            #self.clip_duration, self.frames = self.get_average_duration()
+            # Åbner gif'en og henter dens metadata
+            gif_reader = imageio.get_reader(self.path)
             
-            #self.fps = 1 / self.clip_duration
+            durations = []
+            for frame_idx in range(len(gif_reader)):
+                durations.append(gif_reader.get_meta_data(frame_idx).get('duration', 1000) / 1000)
+            gif_reader.close()
+            
+
+            temp_gif = Image.open(self.path)
+            
+            
+            # Gemmer metadatas i variablerne
+            self.name = os.path.basename(self.path)
+            
+            
+            self.clip_duration = sum(durations)  # Convert to seconds
+            self.frames = len(durations)
+            self.fps =  self.frames/ self.clip_duration
+            
             
             self.width, self.height = temp_gif.size
             
-            self.space = os.path.getsize(self.path) / (1024 * 1024)  # Convert bytes to MB
+            
+            self.space = os.path.getsize(self.path) / (1024 * 1024)  # Laver til MB
 
         except Exception as e:
             print(f"Error populating GIF info: {str(e)}")
-        
-    def get_average_duration(self):
-        gif = Image.open(self.path)
-
-        total_frames = gif.n_frames
-
-        durations = []
-        for frame in range(total_frames):
-            gif.seek(frame)
-            durations.append(gif.info['duration'])
-
-        average_duration = sum(durations) / len(durations)
-        return average_duration, len(total_frames)
 
     def __str__(self):
         return f"GifHolder: {self.name}, Duration: {self.name}ms, FPS: {self.name}, Size: {self.width}x{self.height}"
