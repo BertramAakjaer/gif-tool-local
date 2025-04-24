@@ -2,7 +2,7 @@ from PIL import Image
 from PIL.ImageSequence import Iterator
 import streamlit as st, os, tempfile
 
-FILE_ADD_NAME = '_trimmed'
+FILE_ADD_NAME = '_crop'
 
 def trim_gif_ui(path):
     gif = Image.open(path)
@@ -44,7 +44,5 @@ def trim_gif_ui(path):
         )
 
         os.replace(temp_gif_path, path_to_gif)
-        st.success("Added caption to .gif!")
-        st.rerun()
-        
+                
         return True

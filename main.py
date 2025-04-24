@@ -5,6 +5,8 @@ import modules.to_gif_tools as gt
 import modules.gif_class as gc
 import modules.caption_gif as cg
 import modules.trim_size_tool as tst
+import modules.trim_gif_tool as tgt
+
 #import modules.lossy_gif as lg
 
 # Sætter en hovedet gif, til at arbejde på
@@ -229,13 +231,42 @@ if __name__ == "__main__":
             
         with tab1: # Værktøj til at Croppe gif'en
             if os.path.exists(r"output/output.gif"):
-                if tst.trim_gif_ui(active_gif.path):
-                    new_gif()
+                with st.spinner("Trimming GIF..."):
+                    if tst.trim_gif_ui(active_gif.path):
+                        st.success("Cropped to .gif!")
+                        
+                        new_gif()
+                        st.rerun()
+                        
             else:
                 st.warning("No active .gif found.")
 
         with tab2: # Værktøj til at trimme gif'en
-            st.write("Content for tab 2")
+            st.title("Tool: Trim GIF")
+
+            if os.path.exists(r"output/output.gif"):
+                # Inputfælter til at brugeren sætter ind hvor meget der skal af
+                col1, col2 = st.columns(2)
+                with col1:
+                    cut_start = st.number_input("Seconds to trim from start", min_value=0.0, max_value=30.0, value=0.0, step=0.1)
+                with col2:
+                    cut_end = st.number_input("Seconds to trim from end", min_value=0.0, max_value=30.0, value=2.0, step=0.1)
+
+                if st.button("Trim GIF"):
+                    try:
+                        with st.spinner("Trimming GIF..."):
+                            # Trimmer giffen og finder den folder den skal ende op i
+                            tgt.trim_gif(active_gif.path, cut_start=cut_start, cut_end=cut_end)
+                            new_gif()
+
+                            st.success("GIF trimmed successfully.")
+                            st.rerun()
+
+                    # Giver en error message hvis der er fejl under trimming    
+                    except Exception as e:
+                        st.error(f"Failed to trim GIF: {e}")
+            else:
+                st.warning("No active .gif found.")
 
         with tab3: # Værktøj til at tilføje caption til gif'en
             st.title("Tool: Add caption to .gif")
