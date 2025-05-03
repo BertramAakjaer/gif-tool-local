@@ -13,8 +13,6 @@ FONT_SIZE = 40
 
 
 
-
-
 FILE_ADD_NAME = '_captioned'
 
 
